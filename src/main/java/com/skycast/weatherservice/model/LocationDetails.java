@@ -12,13 +12,4 @@ public class LocationDetails {
 
     @JsonProperty("CityCode")
     private String cityCode;
-
-    @JsonProperty("CityName")
-    private String cityName;
-
-    @JsonProperty("Temp")
-    private String temp;
-
-    @JsonProperty("Status")
-    private String status;
 }
