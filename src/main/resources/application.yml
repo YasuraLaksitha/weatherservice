@@ -19,6 +19,9 @@ management:
       probes:
         enabled: true
 
+weather:
+  api-key: ${API_KEY}
+
 logging:
   level:
     com.skycast.weatherservice: DEBUG
