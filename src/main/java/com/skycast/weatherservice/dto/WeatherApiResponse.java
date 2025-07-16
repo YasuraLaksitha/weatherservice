@@ -1,4 +1,4 @@
-package com.skycast.weatherservice.model;
+package com.skycast.weatherservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

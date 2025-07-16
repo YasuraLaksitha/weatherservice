@@ -1,17 +1,15 @@
-package com.skycast.weatherservice.model;
+package com.skycast.weatherservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LocationListWrapper {
+public class LocationDetails {
 
-    @JsonProperty("List")
-    private List<LocationDetails> list;
+    @JsonProperty("CityCode")
+    private String cityCode;
 }

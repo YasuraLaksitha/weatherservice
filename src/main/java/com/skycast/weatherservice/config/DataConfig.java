@@ -1,7 +1,7 @@
 package com.skycast.weatherservice.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skycast.weatherservice.model.LocationListWrapper;
+import com.skycast.weatherservice.dto.LocationListWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

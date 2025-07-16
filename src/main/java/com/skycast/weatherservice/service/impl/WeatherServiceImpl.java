@@ -1,8 +1,8 @@
 package com.skycast.weatherservice.service.impl;
 
 import com.skycast.weatherservice.dto.WeatherSummaryDTO;
-import com.skycast.weatherservice.model.LocationListWrapper;
-import com.skycast.weatherservice.model.WeatherApiResponse;
+import com.skycast.weatherservice.dto.LocationListWrapper;
+import com.skycast.weatherservice.dto.WeatherApiResponse;
 import com.skycast.weatherservice.service.IWeatherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
