@@ -27,7 +27,7 @@ public class WeatherController {
     public ResponseEntity<WeatherResponseListDTO> fetchAll() {
         log.info("Request received for fetch all weather data");
 
-        final List<WeatherSummaryDTO> weatherApiResponses = weatherService.retrieveAllWeatherData();
+        final List<WeatherSummaryDTO> weatherApiResponses = weatherService.retrieveAllWeatherData().getWeatherSummaries();
         final WeatherResponseListDTO weatherResponseListDTO = WeatherResponseListDTO.builder()
                 .status(ApplicationDefaultConstants.RESPONSE_STATUS_200)
                 .message(ApplicationDefaultConstants.RESPONSE_MESSAGE_200)

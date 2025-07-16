@@ -3,10 +3,12 @@ package com.skycast.weatherservice.service.impl;
 import com.skycast.weatherservice.dto.WeatherSummaryDTO;
 import com.skycast.weatherservice.dto.LocationListWrapper;
 import com.skycast.weatherservice.dto.WeatherApiResponse;
+import com.skycast.weatherservice.dto.WeatherSummaryListDTOWrapper;
 import com.skycast.weatherservice.service.IWeatherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -42,15 +44,16 @@ public class WeatherServiceImpl implements IWeatherService {
      *
      * @return a list of WeatherSummaryDTO which contains weather data for each location
      */
+    @Cacheable(value = "weatherData", unless = "#result == null || #result.weatherSummaries.isEmpty()" )
     @Override
-    public List<WeatherSummaryDTO> retrieveAllWeatherData() {
+    public WeatherSummaryListDTOWrapper retrieveAllWeatherData() {
         log.info("Starting retrieval and mapping of weather data.");
 
         final List<WeatherApiResponse> weatherApiResponses = requestWeatherData();
 
         if (weatherApiResponses.isEmpty()) {
             log.warn("No weather data received from API");
-            return List.of();
+            return WeatherSummaryListDTOWrapper.builder().weatherSummaries(List.of()).build();
         }
 
         final List<WeatherSummaryDTO> summaryDTOS = weatherApiResponses.stream().map(weatherApiResponse -> {
@@ -78,7 +81,10 @@ public class WeatherServiceImpl implements IWeatherService {
         }).toList();
 
         log.info("Successfully mapped {} weather summaries", summaryDTOS.size());
-        return summaryDTOS;
+
+        return WeatherSummaryListDTOWrapper.builder()
+                .weatherSummaries(summaryDTOS)
+                .build();
     }
 
     /**

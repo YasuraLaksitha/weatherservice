@@ -1,8 +1,6 @@
 package com.skycast.weatherservice.service;
 
-import com.skycast.weatherservice.dto.WeatherSummaryDTO;
-
-import java.util.List;
+import com.skycast.weatherservice.dto.WeatherSummaryListDTOWrapper;
 
 public interface IWeatherService {
 
@@ -11,5 +9,5 @@ public interface IWeatherService {
      *
      * @return List<WeatherSummaryDTO> containing summarized weather data for each city code
      */
-    List<WeatherSummaryDTO> retrieveAllWeatherData();
+    WeatherSummaryListDTOWrapper retrieveAllWeatherData();
 }
