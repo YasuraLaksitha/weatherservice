@@ -44,7 +44,7 @@ public class WeatherServiceImpl implements IWeatherService {
      *
      * @return a list of WeatherSummaryDTO which contains weather data for each location
      */
-    @Cacheable(value = "weatherData", unless = "#result == null || #result.weatherSummaries.isEmpty()" )
+    @Cacheable(value = "weatherData", unless = "#result == null || #result.weatherSummaries.isEmpty()")
     @Override
     public WeatherSummaryListDTOWrapper retrieveAllWeatherData() {
         log.info("Starting retrieval and mapping of weather data.");
@@ -59,15 +59,18 @@ public class WeatherServiceImpl implements IWeatherService {
         final List<WeatherSummaryDTO> summaryDTOS = weatherApiResponses.stream().map(weatherApiResponse -> {
             final WeatherApiResponse.Sys sys = weatherApiResponse.getSys();
             final WeatherApiResponse.Main main = weatherApiResponse.getMain();
+            final WeatherApiResponse.Weather weather = weatherApiResponse.getWeather().getFirst();
 
             final WeatherSummaryDTO summaryDTO = WeatherSummaryDTO.builder()
                     .cityName(weatherApiResponse.getName())
-                    .weatherDescription(weatherApiResponse.getWeather().getFirst().getDescription())
+                    .weatherDescription(weather.getDescription())
                     .temp(main.getTemp())
                     .tempMin(main.getTempMin())
                     .tempMax(main.getTempMax())
                     .humidity(main.getHumidity())
                     .pressure(main.getPressure())
+                    .country(sys.getCountry())
+                    .icon(weather.getIcon())
                     .sunrise(formatTime(sys.getSunrise(), weatherApiResponse.getTimezone()))
                     .sunset(formatTime(sys.getSunset(), weatherApiResponse.getTimezone()))
                     .visibility(weatherApiResponse.getVisibility() / 1000)
@@ -127,9 +130,9 @@ public class WeatherServiceImpl implements IWeatherService {
     }
 
     /**
-     *Converts epoch seconds and timezone offset to a formatted time string
+     * Converts epoch seconds and timezone offset to a formatted time string
      *
-     * @param epochSeconds The epoch time is seconds (UTC)
+     * @param epochSeconds  The epoch time is seconds (UTC)
      * @param offsetSeconds The timezone offset in seconds
      * @return Formatted time similar to "7.32 pm" adjusted to timezone
      */

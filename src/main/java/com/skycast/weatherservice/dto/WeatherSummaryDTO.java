@@ -13,6 +13,10 @@ public class WeatherSummaryDTO {
 
     private String cityName;
 
+    private String country;
+
+    private String icon;
+
     private String weatherDescription;
 
     private Double temp;
