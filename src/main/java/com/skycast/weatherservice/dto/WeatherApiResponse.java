@@ -47,6 +47,9 @@ public class WeatherApiResponse {
     @Data
     @NoArgsConstructor
     public static class Weather {
+
+        private String icon;
+
         private String description;
     }
 
@@ -63,6 +66,8 @@ public class WeatherApiResponse {
     @Data
     @NoArgsConstructor
     public static class Sys {
+
+        private String country;
 
         private Long sunrise;
 
