@@ -7,6 +7,7 @@ import com.skycast.weatherservice.service.IWeatherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,7 +24,8 @@ public class WeatherController {
 
     private final IWeatherService weatherService;
 
-    @GetMapping("/fetch-all")
+    @GetMapping("/user/fetch-all")
+    @PreAuthorize("hasAuthority('read:weatherData')")
     public ResponseEntity<WeatherResponseListDTO> fetchAll() {
         log.info("Request received for fetch all weather data");
 
