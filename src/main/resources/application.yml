@@ -7,6 +7,12 @@ spring:
     redis:
       host: localhost
       port: 6379
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-6qj807foiplf7q1h.us.auth0.com/
+          audiences: https://skycast-api
 
 management:
   endpoints:
@@ -25,6 +31,9 @@ management:
 
 weather:
   api-key: ${API_KEY}
+
+app:
+  client-origin: "http://localhost:5173"
 
 logging:
   level:
