@@ -1,0 +1,40 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: weatherservice
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-6qj807foiplf7q1h.us.auth0.com/
+          audiences: https://skycast-api
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  health:
+    readiness-state:
+      enabled: true
+    liveness-state:
+      enabled: true
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+weather:
+  api-key: ${API_KEY}
+
+app:
+  client-origin: "http://localhost:5173"
+
+logging:
+  level:
+    com.skycast.weatherservice: DEBUG
