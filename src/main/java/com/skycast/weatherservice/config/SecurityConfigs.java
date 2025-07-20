@@ -43,6 +43,7 @@ public class SecurityConfigs {
                         .allowedOrigins(clientOrigin)
                         .allowedMethods("*")
                         .allowedHeaders("*")
+                        .exposedHeaders(CorrelationIdFilter.CORRELATION_ID_HEADER)
                         .allowCredentials(true);
             }
         };
