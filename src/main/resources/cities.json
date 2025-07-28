@@ -4,13 +4,15 @@
       "CityCode": "1248991",
       "CityName": "Colombo",
       "Temp": "33.0",
-      "Status": "Clouds"
+      "Status": "Clouds",
+      "exp": "5"
     },
     {
       "CityCode": "1850147",
       "CityName": "Tokyo",
       "Temp": "8.6",
-      "Status": "Clear"
+      "Status": "Clear",
+      "exp": "3"
     },
     {
       "CityCode": "2644210",

@@ -1,14 +1,11 @@
 package com.skycast.weatherservice.service.impl;
 
-import com.skycast.weatherservice.dto.WeatherSummaryDTO;
-import com.skycast.weatherservice.dto.LocationListWrapper;
-import com.skycast.weatherservice.dto.WeatherApiResponse;
-import com.skycast.weatherservice.dto.WeatherSummaryListDTOWrapper;
+import com.skycast.weatherservice.dto.*;
+import com.skycast.weatherservice.repository.WeatherRepository;
 import com.skycast.weatherservice.service.IWeatherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -20,6 +17,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -36,6 +34,8 @@ public class WeatherServiceImpl implements IWeatherService {
 
     private final RestTemplate restTemplate;
 
+    private final WeatherRepository repository;
+
     /**
      * Implementation of {@link IWeatherService} to retrieve weather data from OpenWeatherMap API
      * and map into {@link WeatherSummaryDTO} objects
@@ -44,46 +44,26 @@ public class WeatherServiceImpl implements IWeatherService {
      *
      * @return a list of WeatherSummaryDTO which contains weather data for each location
      */
-    @Cacheable(value = "weatherData", unless = "#result == null || #result.weatherSummaries.isEmpty()")
     @Override
     public WeatherSummaryListDTOWrapper retrieveAllWeatherData() {
         log.info("Starting retrieval and mapping of weather data.");
 
-        final List<WeatherApiResponse> weatherApiResponses = requestWeatherData();
+        List<WeatherSummaryDTO> summaryDTOS = new ArrayList<>();
 
-        if (weatherApiResponses.isEmpty()) {
-            log.warn("No weather data received from API");
-            return WeatherSummaryListDTOWrapper.builder().weatherSummaries(List.of()).build();
+        for (LocationDetails locationDetails : locationListWrapper.getList()) {
+
+            final String cityCode = locationDetails.getCityCode();
+            final WeatherSummaryDTO dto = retrieveData(cityCode);
+
+            if (dto != null) {
+                repository.save(dto);
+                summaryDTOS.add(dto);
+
+                log.debug("Added WeatherSummaryDTO for city '{}': {}", dto.getCityName(), dto);
+            } else {
+                log.warn("Skipping city code {} due to retrieval failure", cityCode);
+            }
         }
-
-        final List<WeatherSummaryDTO> summaryDTOS = weatherApiResponses.stream().map(weatherApiResponse -> {
-            final WeatherApiResponse.Sys sys = weatherApiResponse.getSys();
-            final WeatherApiResponse.Main main = weatherApiResponse.getMain();
-            final WeatherApiResponse.Weather weather = weatherApiResponse.getWeather().getFirst();
-
-            final WeatherSummaryDTO summaryDTO = WeatherSummaryDTO.builder()
-                    .cityName(weatherApiResponse.getName())
-                    .weatherDescription(weather.getDescription())
-                    .temp(main.getTemp())
-                    .tempMin(main.getTempMin())
-                    .tempMax(main.getTempMax())
-                    .humidity(main.getHumidity())
-                    .pressure(main.getPressure())
-                    .country(sys.getCountry())
-                    .icon(weather.getIcon())
-                    .sunrise(formatTime(sys.getSunrise(), weatherApiResponse.getTimezone()))
-                    .sunset(formatTime(sys.getSunset(), weatherApiResponse.getTimezone()))
-                    .visibility(weatherApiResponse.getVisibility() / 1000)
-                    .windSpeed(weatherApiResponse.getWind().getSpeed())
-                    .windDegree(weatherApiResponse.getWind().getDegree())
-                    .build();
-
-            log.debug("Mapped WeatherSummaryDTO for city '{}': {}", summaryDTO.getCityName(), summaryDTO);
-
-            return summaryDTO;
-        }).toList();
-
-        log.info("Successfully mapped {} weather summaries", summaryDTOS.size());
 
         return WeatherSummaryListDTOWrapper.builder()
                 .weatherSummaries(summaryDTOS)
@@ -91,42 +71,48 @@ public class WeatherServiceImpl implements IWeatherService {
     }
 
     /**
-     * Makes HTTP GET requests to the weather API for each location and collects
-     * weather data to raw {@link WeatherApiResponse} objects
+     * Maps WeatherApiResponse to WeatherSummaryDTO
      *
-     * @return List of raw {@link WeatherApiResponse} from the weather API.
+     * @param weatherApiResponse weatherApiResponse
+     * @return WeatherSummaryDTO
      */
-    private List<WeatherApiResponse> requestWeatherData() {
-        log.info("Starting to request weather data from the API");
+    private WeatherSummaryDTO mapToWeatherSummaryDTO(WeatherApiResponse weatherApiResponse) {
+        final WeatherApiResponse.Sys sys = weatherApiResponse.getSys();
+        final WeatherApiResponse.Main main = weatherApiResponse.getMain();
+        final WeatherApiResponse.Weather weather = weatherApiResponse.getWeather().getFirst();
 
-        final ArrayList<WeatherApiResponse> weatherApiResponses = new ArrayList<>();
+        return WeatherSummaryDTO.builder()
+                .cityName(weatherApiResponse.getName())
+                .weatherDescription(weather.getDescription())
+                .temp(main.getTemp())
+                .tempMin(main.getTempMin())
+                .tempMax(main.getTempMax())
+                .humidity(main.getHumidity())
+                .pressure(main.getPressure())
+                .id(weatherApiResponse.getId())
+                .country(sys.getCountry())
+                .icon(weather.getIcon())
+                .expiration(Long.parseLong(findExpiration(weatherApiResponse.getId())) * 60)
+                .sunrise(formatTime(sys.getSunrise(), weatherApiResponse.getTimezone()))
+                .sunset(formatTime(sys.getSunset(), weatherApiResponse.getTimezone()))
+                .visibility(weatherApiResponse.getVisibility() / 1000)
+                .windSpeed(weatherApiResponse.getWind().getSpeed())
+                .windDegree(weatherApiResponse.getWind().getDegree())
+                .build();
+    }
 
-        locationListWrapper.getList().forEach(locationDetails -> {
-            final String uriString = UriComponentsBuilder.fromUriString(BASE_URL)
-                    .queryParam("id", locationDetails.getCityCode())
-                    .queryParam("units", "metric")
-                    .queryParam("appid", apiKey)
-                    .toUriString();
-
-            try {
-                final WeatherApiResponse apiResponse = restTemplate.getForObject(
-                        uriString,
-                        WeatherApiResponse.class
-                );
-
-                if (apiResponse == null) {
-                    log.warn("Failed to retrieve weather data for city code: {}", locationDetails.getCityCode());
-                } else {
-                    log.debug("Api Response found for city name: {}", apiResponse.getName());
-                    weatherApiResponses.add(apiResponse);
-                }
-            } catch (RestClientException e) {
-                log.error("Exception while retrieving weather data for city code: {}", locationDetails.getCityCode(), e);
-            }
-        });
-
-        log.info("Successfully retrieved weather data for {} city codes", weatherApiResponses.size());
-        return weatherApiResponses;
+    /**
+     * Method will filter and find the expiration time from the Json content
+     *
+     * @param cityCode - cityCode
+     * @return - Expiration Time
+     */
+    private String findExpiration(final String cityCode) {
+        return locationListWrapper.getList().stream()
+                .filter(location -> location.getCityCode().equals(cityCode))
+                .map(LocationDetails::getExpirationTime)
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -145,5 +131,45 @@ public class WeatherServiceImpl implements IWeatherService {
         log.debug("Formatted time for epochSeconds: {} with offsetSeconds: {} is {}", epochSeconds, offsetSeconds, formatted);
 
         return formatted;
+    }
+
+    /**
+     * Fetches weather data according to the city code.
+     * If it is cache hit, it will retrieve the WeatherSummaryDTO.
+     * IF it is cache mis, it will fetch data from the weather API and convert to WeatherSummaryDTO
+     *
+     * @param cityCode cityCode
+     * @return WeatherSummaryDTO
+     */
+    private WeatherSummaryDTO retrieveData(final String cityCode) {
+        final Optional<WeatherSummaryDTO> weatherSummaryDTO = repository.findById(cityCode);
+
+        if (weatherSummaryDTO.isPresent()) return weatherSummaryDTO.get();
+
+        final String uriString = UriComponentsBuilder.fromUriString(BASE_URL)
+                .queryParam("id", cityCode)
+                .queryParam("units", "metric")
+                .queryParam("appid", apiKey)
+                .toUriString();
+
+        try {
+            final WeatherApiResponse apiResponse = restTemplate.getForObject(
+                    uriString,
+                    WeatherApiResponse.class
+            );
+
+            if (apiResponse == null) {
+                log.warn("Failed to retrieve weather data for city code: {}", cityCode);
+
+            } else {
+                log.debug("Api Response found for city name: {}", apiResponse.getName());
+
+                return mapToWeatherSummaryDTO(apiResponse);
+            }
+
+        } catch (RestClientException e) {
+            log.error("Exception while retrieving weather data for city code: {}", cityCode, e);
+        }
+        return null;
     }
 }

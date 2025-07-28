@@ -12,4 +12,7 @@ public class LocationDetails {
 
     @JsonProperty("CityCode")
     private String cityCode;
+
+    @JsonProperty("exp")
+    private String expirationTime = "10";
 }

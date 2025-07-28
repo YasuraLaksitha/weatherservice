@@ -12,6 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 public class WeatherApiResponse {
 
+    private String id;
+
     private String name;
 
     private Main main;
