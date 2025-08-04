@@ -15,7 +15,6 @@ public class RedisConfig {
 
     @Bean
     protected RedisCacheConfiguration cacheConfiguration() {
-        log.info("Initializing Redis Cache Configuration with TTL = 15 minutes and GenericJackson2JsonRedisSerializer.");
 
         return RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(15))
